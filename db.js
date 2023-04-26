@@ -2,8 +2,10 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
+const Bill = require('./models/Bill');
+
 const {
-  DB_USER, DB_PASSWORD, DB_HOST, DB_NAME
+  DB_USER, DB_PASSWORD, DB_HOST, DB_NAME,PORT
 } = process.env;
 let sequelize =
   process.env.NODE_ENV === "production"
@@ -11,7 +13,7 @@ let sequelize =
         database: DB_NAME,
         dialect: "postgres",
         host: DB_HOST,
-        port: 5432,
+        port: PORT,
         username: DB_USER,
         password: DB_PASSWORD,
         pool: {
@@ -30,7 +32,7 @@ let sequelize =
         ssl: true,
       })
     : new Sequelize(
-        `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}`,
+        `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${PORT}/${DB_NAME}`,
         { logging: false, native: false }
       );
 // const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/gym`, {
@@ -58,12 +60,40 @@ sequelize.models = Object.fromEntries(capsEntries);
 
 // En sequelize.models están todos los modelos importados como propiedades
 // Para relacionarlos hacemos un destructuring
-const { Product, User } = sequelize.models;
+const { Product, User, Order, Review,Factura} = sequelize.models;
 
 // Aca vendrian las relaciones
 // Product.hasMany(Reviews);
-Product.belongsToMany(User, {through: "user_products", timestamps: false});
-User.belongsToMany(Product, {through: "user_products", timestamps: false});
+
+// Bill.hasOne(Order);
+// Order.belongsTo(Bill);
+
+// Order.belongsTo(Bill);
+// Bill.hasOne(Order);
+
+// User.belongsToMany(Bill, {through: "bills_user", timestamps: false});
+// Bill.belongsTo(User, {through: "bills_user", timestamps: false});
+
+
+User.hasMany(Order);
+Order.belongsTo(User);
+
+
+
+Product.belongsToMany(Order, { through: "Order_Line" });
+Order.belongsToMany(Product, { through: "Order_Line" });
+
+Review.belongsTo(Product);
+Product.hasMany(Review);
+
+Review.belongsTo(User);
+User.hasMany(Review);
+
+Order.hasOne(Factura);
+Factura.belongsTo(User);
+
+
+
 
 
 module.exports = {
